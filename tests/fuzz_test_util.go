@@ -17,7 +17,7 @@
 package tests
 
 import (
-	_ "bytes"
+	"bytes"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/rawdb"
@@ -114,7 +114,8 @@ func RunFuzz(fuzzed Fuzzed) FuzzResult {
 
 			var vmConfig vm.Config
 
-			//var traceBuffer bytes.Buffer
+			var traceBuffer bytes.Buffer
+			// TODO we need a logger that will feed the traceBuffer.
 			//jsonLogger := vm.NewJSONLogger(&vm.LogConfig{
 			//	false,
 			//	false,
@@ -123,17 +124,17 @@ func RunFuzz(fuzzed Fuzzed) FuzzResult {
 			//	0,
 			//}, &traceBuffer)
 
-			//if fuzzed.GetIsDebugMode() {
-			//	vmConfig = vm.Config{
-			//		Tracer: jsonLogger,
-			//		Debug:  true,
-			//	}
-			//} else {
-			vmConfig = vm.Config{
-				Tracer: nil,
-				Debug:  false,
+			if fuzzed.GetIsDebugMode() {
+				vmConfig = vm.Config{
+					Tracer: nil,
+					Debug:  true,
+				}
+			} else {
+				vmConfig = vm.Config{
+					Tracer: nil,
+					Debug:  false,
+				}
 			}
-			//}
 
 			chainConfig := params.MainnetChainConfig
 			blockContext := vm.BlockContext{
@@ -170,13 +171,13 @@ func RunFuzz(fuzzed Fuzzed) FuzzResult {
 
 			rootHashes = append(rootHashes, root.Hex())
 
-			//if fuzzed.GetIsDebugMode() {
-			//	stateDumps = append(stateDumps, string(statedb.Dump(false, false, false)))
-			//	traces = append(traces, traceBuffer.String())
-			//} else {
-			stateDumps = append(stateDumps, "")
-			traces = append(traces, "")
-			//}
+			if fuzzed.GetIsDebugMode() {
+				stateDumps = append(stateDumps, string(statedb.Dump(&state.DumpConfig{})))
+				traces = append(traces, traceBuffer.String())
+			} else {
+				stateDumps = append(stateDumps, "")
+				traces = append(traces, "")
+			}
 		}
 	}
 

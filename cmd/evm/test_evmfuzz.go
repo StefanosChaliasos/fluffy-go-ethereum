@@ -1,7 +1,6 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"github.com/ethereum/go-ethereum/tests"
 	"google.golang.org/protobuf/encoding/prototext"
@@ -11,14 +10,6 @@ import (
 	_ "testing"
 	_ "time"
 )
-
-var inputPipe string
-var outputPipe string
-
-func init() {
-	flag.StringVar(&inputPipe, "in", "", "")
-	flag.StringVar(&outputPipe, "out", "", "")
-}
 
 func main() {
 	dirname := "../openethereum/crates/evmfuzz/fuzz/corpus/fuzz_target_1"
@@ -41,8 +32,12 @@ func main() {
 		}
 
 		fuzzResults := tests.RunFuzz(fuzzedInputProto)
-		marshalOptions := prototext.MarshalOptions{}
-		fuzzResultText := marshalOptions.Format(&fuzzResults)
-		fmt.Println(fuzzResultText)
+		if len(fuzzResults.Roots) == 0 {
+			fmt.Println("Empty result")
+		} else {
+			marshalOptions := prototext.MarshalOptions{}
+			fuzzResultText := marshalOptions.Format(&fuzzResults)
+			fmt.Println(fuzzResultText)
+		}
 	}
 }
