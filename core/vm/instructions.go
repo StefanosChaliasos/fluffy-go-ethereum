@@ -260,7 +260,8 @@ func opAddress(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]
 
 func opBalance(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte, error) {
 	slot := scope.Stack.peek()
-	address := common.Address(slot.Bytes20())
+	// FUZZ INSTR
+	address := interpreter.evm.BigToAddress(slot.Bytes20())
 	slot.SetFromBig(interpreter.evm.StateDB.GetBalance(address))
 	return nil, nil
 }
@@ -382,7 +383,8 @@ func opExtCodeCopy(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext)
 	if overflow {
 		uint64CodeOffset = 0xffffffffffffffff
 	}
-	addr := common.Address(a.Bytes20())
+	// FUZZ INSTR
+	addr := interpreter.evm.BigToAddress(a.Bytes20())
 	codeCopy := getData(interpreter.evm.StateDB.GetCode(addr), uint64CodeOffset, length.Uint64())
 	scope.Memory.Set(memOffset.Uint64(), length.Uint64(), codeCopy)
 
@@ -417,7 +419,8 @@ func opExtCodeCopy(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext)
 //     account should be regarded as a non-existent account and zero should be returned.
 func opExtCodeHash(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte, error) {
 	slot := scope.Stack.peek()
-	address := common.Address(slot.Bytes20())
+	// FUZZ INSTR
+	address := interpreter.evm.BigToAddress(slot.Bytes20())
 	if interpreter.evm.StateDB.Empty(address) {
 		slot.Clear()
 	} else {
@@ -672,7 +675,8 @@ func opCall(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byt
 	gas := interpreter.evm.callGasTemp
 	// Pop other call parameters.
 	addr, value, inOffset, inSize, retOffset, retSize := stack.pop(), stack.pop(), stack.pop(), stack.pop(), stack.pop(), stack.pop()
-	toAddr := common.Address(addr.Bytes20())
+	// FUZZ INSTR
+	toAddr := interpreter.evm.BigToAddress(addr.Bytes20())
 	// Get the arguments from the memory.
 	args := scope.Memory.GetPtr(int64(inOffset.Uint64()), int64(inSize.Uint64()))
 
@@ -713,7 +717,8 @@ func opCallCode(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([
 	gas := interpreter.evm.callGasTemp
 	// Pop other call parameters.
 	addr, value, inOffset, inSize, retOffset, retSize := stack.pop(), stack.pop(), stack.pop(), stack.pop(), stack.pop(), stack.pop()
-	toAddr := common.Address(addr.Bytes20())
+	// FUZZ INSTR
+	toAddr := interpreter.evm.BigToAddress(addr.Bytes20())
 	// Get arguments from the memory.
 	args := scope.Memory.GetPtr(int64(inOffset.Uint64()), int64(inSize.Uint64()))
 
@@ -748,7 +753,8 @@ func opDelegateCall(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext
 	gas := interpreter.evm.callGasTemp
 	// Pop other call parameters.
 	addr, inOffset, inSize, retOffset, retSize := stack.pop(), stack.pop(), stack.pop(), stack.pop(), stack.pop()
-	toAddr := common.Address(addr.Bytes20())
+	// FUZZ INSTR
+	toAddr := interpreter.evm.BigToAddress(addr.Bytes20())
 	// Get arguments from the memory.
 	args := scope.Memory.GetPtr(int64(inOffset.Uint64()), int64(inSize.Uint64()))
 
@@ -776,7 +782,8 @@ func opStaticCall(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) 
 	gas := interpreter.evm.callGasTemp
 	// Pop other call parameters.
 	addr, inOffset, inSize, retOffset, retSize := stack.pop(), stack.pop(), stack.pop(), stack.pop(), stack.pop()
-	toAddr := common.Address(addr.Bytes20())
+	// FUZZ INSTR
+	toAddr := interpreter.evm.BigToAddress(addr.Bytes20())
 	// Get arguments from the memory.
 	args := scope.Memory.GetPtr(int64(inOffset.Uint64()), int64(inSize.Uint64()))
 

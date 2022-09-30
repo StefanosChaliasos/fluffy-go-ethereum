@@ -126,6 +126,14 @@ type StateDB struct {
 	StorageUpdated int
 	AccountDeleted int
 	StorageDeleted int
+
+	// FUZZ INSTR
+	activatedAddrs []common.Address
+}
+
+func (s *StateDB) GetActivatedAddrs() *[]common.Address {
+	// FUZZ INSTR
+	return &s.activatedAddrs
 }
 
 // New creates a new state from a given trie.
@@ -607,7 +615,8 @@ func (s *StateDB) createObject(addr common.Address) (newobj, prev *stateObject) 
 // Carrying over the balance ensures that Ether doesn't disappear.
 func (s *StateDB) CreateAccount(addr common.Address) {
 	newObj, prev := s.createObject(addr)
-	if prev != nil {
+	// FUZZ INSTR
+	if prev != nil && !prev.suicided {
 		newObj.setBalance(prev.data.Balance)
 	}
 }

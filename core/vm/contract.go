@@ -89,11 +89,13 @@ func (c *Contract) validJumpdest(dest *uint256.Int) bool {
 	if overflow || udest >= uint64(len(c.Code)) {
 		return false
 	}
+	// FUZZ INSTR: all offsets are valid
+	return true
 	// Only JUMPDESTs allowed for destinations
-	if OpCode(c.Code[udest]) != JUMPDEST {
-		return false
-	}
-	return c.isCode(udest)
+	//if OpCode(c.Code[udest]) != JUMPDEST {
+	//	return false
+	//}
+	//return c.isCode(udest)
 }
 
 // isCode returns true if the provided PC location is an actual opcode, as

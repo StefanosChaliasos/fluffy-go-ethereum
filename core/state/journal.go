@@ -160,6 +160,19 @@ func (ch resetObjectChange) dirtied() *common.Address {
 	return nil
 }
 
+// FUZZ INSTR
+var builtinAddrs = map[common.Address]struct{}{
+	common.HexToAddress("0000000000000000000000000000000000000001"): {},
+	common.HexToAddress("0000000000000000000000000000000000000002"): {},
+	common.HexToAddress("0000000000000000000000000000000000000003"): {},
+	common.HexToAddress("0000000000000000000000000000000000000004"): {},
+	common.HexToAddress("0000000000000000000000000000000000000005"): {},
+	common.HexToAddress("0000000000000000000000000000000000000006"): {},
+	common.HexToAddress("0000000000000000000000000000000000000007"): {},
+	common.HexToAddress("0000000000000000000000000000000000000008"): {},
+	common.HexToAddress("0000000000000000000000000000000000000009"): {},
+}
+
 func (ch suicideChange) revert(s *StateDB) {
 	obj := s.getStateObject(*ch.account)
 	if obj != nil {

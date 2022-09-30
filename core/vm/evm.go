@@ -161,6 +161,21 @@ func (evm *EVM) Interpreter() *EVMInterpreter {
 	return evm.interpreter
 }
 
+// FUZZ INSTR
+func (evm *EVM) BigToAddress(b *big.Int) common.Address {
+	listLen := big.NewInt(int64(len(*evm.StateDB.GetActivatedAddrs())))
+	index := b.Mod(b, listLen) // b is mutated... (confusing) :(, but we don't use it
+
+	var string_addrs []string
+	for _, addr := range *evm.StateDB.GetActivatedAddrs() {
+		string_addrs = append(string_addrs, addr.Hex())
+	}
+
+	// fmt.Println(index, "-->", string_addrs)
+
+	return (*evm.StateDB.GetActivatedAddrs())[index.Int64()]
+}
+
 // Call executes the contract associated with the addr with the given input as
 // parameters. It also handles any necessary value transfer required and takes
 // the necessary steps to create accounts and reverses the state in case of an
@@ -181,13 +196,14 @@ func (evm *EVM) Call(caller ContractRef, addr common.Address, input []byte, gas 
 		if !isPrecompile && evm.chainRules.IsEIP158 && value.Sign() == 0 {
 			// Calling a non existing account, don't do anything, but ping the tracer
 			if evm.Config.Debug {
-				if evm.depth == 0 {
-					evm.Config.Tracer.CaptureStart(evm, caller.Address(), addr, false, input, gas, value)
-					evm.Config.Tracer.CaptureEnd(ret, 0, 0, nil)
-				} else {
-					evm.Config.Tracer.CaptureEnter(CALL, caller.Address(), addr, input, gas, value)
-					evm.Config.Tracer.CaptureExit(ret, 0, nil)
-				}
+				// FUZZ INSTR
+				//if evm.depth == 0 {
+				//	evm.Config.Tracer.CaptureStart(evm, caller.Address(), addr, false, input, gas, value)
+				//	evm.Config.Tracer.CaptureEnd(ret, 0, 0, nil)
+				//} else {
+				evm.Config.Tracer.CaptureEnter(CALL, caller.Address(), addr, input, gas, value)
+				evm.Config.Tracer.CaptureExit(ret, 0, nil)
+				//}
 			}
 			return nil, gas, nil
 		}
@@ -197,18 +213,19 @@ func (evm *EVM) Call(caller ContractRef, addr common.Address, input []byte, gas 
 
 	// Capture the tracer start/end events in debug mode
 	if evm.Config.Debug {
-		if evm.depth == 0 {
-			evm.Config.Tracer.CaptureStart(evm, caller.Address(), addr, false, input, gas, value)
-			defer func(startGas uint64, startTime time.Time) { // Lazy evaluation of the parameters
-				evm.Config.Tracer.CaptureEnd(ret, startGas-gas, time.Since(startTime), err)
-			}(gas, time.Now())
-		} else {
-			// Handle tracer events for entering and exiting a call frame
-			evm.Config.Tracer.CaptureEnter(CALL, caller.Address(), addr, input, gas, value)
-			defer func(startGas uint64) {
-				evm.Config.Tracer.CaptureExit(ret, startGas-gas, err)
-			}(gas)
-		}
+		// FUZZ INSTR
+		//if evm.depth == 0 {
+		//	evm.Config.Tracer.CaptureStart(evm, caller.Address(), addr, false, input, gas, value)
+		//	defer func(startGas uint64, startTime time.Time) { // Lazy evaluation of the parameters
+		//		evm.Config.Tracer.CaptureEnd(ret, startGas-gas, time.Since(startTime), err)
+		//	}(gas, time.Now())
+		//} else {
+		// Handle tracer events for entering and exiting a call frame
+		evm.Config.Tracer.CaptureEnter(CALL, caller.Address(), addr, input, gas, value)
+		defer func(startGas uint64) {
+			evm.Config.Tracer.CaptureExit(ret, startGas-gas, err)
+		}(gas)
+		//}
 	}
 
 	if isPrecompile {
@@ -441,11 +458,12 @@ func (evm *EVM) create(caller ContractRef, codeAndHash *codeAndHash, gas uint64,
 	contract.SetCodeOptionalHash(&address, codeAndHash)
 
 	if evm.Config.Debug {
-		if evm.depth == 0 {
-			evm.Config.Tracer.CaptureStart(evm, caller.Address(), address, true, codeAndHash.code, gas, value)
-		} else {
-			evm.Config.Tracer.CaptureEnter(typ, caller.Address(), address, codeAndHash.code, gas, value)
-		}
+		// FUZZ INSTR
+		//if evm.depth == 0 {
+		//	evm.Config.Tracer.CaptureStart(evm, caller.Address(), address, true, codeAndHash.code, gas, value)
+		//} else {
+		evm.Config.Tracer.CaptureEnter(typ, caller.Address(), address, codeAndHash.code, gas, value)
+		//}
 	}
 
 	start := time.Now()
@@ -486,11 +504,21 @@ func (evm *EVM) create(caller ContractRef, codeAndHash *codeAndHash, gas uint64,
 	}
 
 	if evm.Config.Debug {
-		if evm.depth == 0 {
-			evm.Config.Tracer.CaptureEnd(ret, gas-contract.Gas, time.Since(start), err)
-		} else {
-			evm.Config.Tracer.CaptureExit(ret, gas-contract.Gas, err)
-		}
+		// FUZZ INSTR
+		//if evm.depth == 0 {
+		//	evm.Config.Tracer.CaptureEnd(ret, gas-contract.Gas, time.Since(start), err)
+		//} else {
+		evm.Config.Tracer.CaptureExit(ret, gas-contract.Gas, err)
+		//}
+	}
+	// FUZZ INSTR
+	// ret != nil only when RETURN and REVERT ended the CREATE constructor
+	// "ret" becomes the code of the created contract
+	//
+	// err != nil means that the contract is not created in the first place
+	// So we also this variable as well
+	if ret != nil && len(ret) > 0 && err == nil {
+		*evm.StateDB.GetActivatedAddrs() = append(*evm.StateDB.GetActivatedAddrs(), address)
 	}
 	return ret, address, contract.Gas, err
 }
