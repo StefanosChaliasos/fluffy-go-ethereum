@@ -18,12 +18,18 @@
 package main
 
 import (
-	"fmt"
+	_ "fmt"
+	"io/ioutil"
 	"math/big"
 	"os"
+	"syscall"
+	"time"
+
+	"google.golang.org/protobuf/proto"
 
 	"github.com/ethereum/go-ethereum/cmd/evm/internal/t8ntool"
 	"github.com/ethereum/go-ethereum/internal/flags"
+	"github.com/ethereum/go-ethereum/tests"
 	"github.com/urfave/cli/v2"
 )
 
@@ -224,6 +230,8 @@ func init() {
 	}
 }
 
+// FUZZ INSTR
+/*
 func main() {
 	if err := app.Run(os.Args); err != nil {
 		code := 1
@@ -233,4 +241,59 @@ func main() {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(code)
 	}
+}
+*/
+
+func main() {
+	ticker := time.NewTicker(time.Duration(10) * time.Second)
+	defer ticker.Stop()
+
+	inputPipe := os.Args[1]
+	outputPipe := os.Args[2]
+
+	// get input pipe, output pipe
+	go func() {
+		for {
+			// Blocked here
+			<-ticker.C
+
+			if os.Getppid() == 1 {
+				// The parent exited, so we exit as well
+				os.Exit(0)
+			}
+		}
+	}()
+
+	println(inputPipe)
+	println(outputPipe)
+
+	for {
+		// READ
+		fuzzedInput, err := ioutil.ReadFile(inputPipe)
+		if err != nil {
+			panic(err)
+		}
+		fuzzedInputProto := tests.Fuzzed{}
+		err = proto.Unmarshal(fuzzedInput, &fuzzedInputProto)
+		if err != nil {
+			panic(err)
+		}
+
+		// RUN TXs
+		// println(fuzzedInputProto.String())
+		fuzzResult := tests.RunFuzz(fuzzedInputProto)
+
+		// WRITE
+		fuzzResultBytes, err := proto.Marshal(&fuzzResult)
+		if err != nil {
+			panic(err)
+		}
+
+		err = ioutil.WriteFile(outputPipe, fuzzResultBytes, syscall.O_WRONLY)
+		if err != nil {
+			panic(err)
+		}
+	}
+
+	return
 }

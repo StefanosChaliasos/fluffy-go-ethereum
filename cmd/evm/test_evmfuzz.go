@@ -11,7 +11,7 @@ import (
 	_ "time"
 )
 
-func main() {
+func test() {
 	dirname := "../openethereum/crates/evmfuzz/fuzz/corpus/fuzz_target_1"
 	files, err := ioutil.ReadDir(dirname)
 	if err != nil {
