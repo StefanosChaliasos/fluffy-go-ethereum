@@ -333,7 +333,7 @@ func gasCall(evm *EVM, contract *Contract, stack *Stack, mem *Memory, memorySize
 		gas            uint64
 		transfersValue = !stack.Back(2).IsZero()
 		// FUZZ INSTR
-		address = evm.Address(stack.Back(1).Bytes20())
+		address = evm.BigToAddress(stack.Back(1).ToBig())
 	)
 	if evm.chainRules.IsEIP158 {
 		if transfersValue && evm.StateDB.Empty(address) {
@@ -427,7 +427,7 @@ func gasSelfdestruct(evm *EVM, contract *Contract, stack *Stack, mem *Memory, me
 	if evm.chainRules.IsEIP150 {
 		gas = params.SelfdestructGasEIP150
 		// FUZZ INSTR
-		var address = evm.Address(stack.Back(0).Bytes20())
+		var address = evm.BigToAddress(stack.Back(0).ToBig())
 
 		if evm.chainRules.IsEIP158 {
 			// if empty and transfers value
