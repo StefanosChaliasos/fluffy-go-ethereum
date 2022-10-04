@@ -279,6 +279,14 @@ func main() {
 			panic(err)
 		}
 
+		defer func() { //catch or finally
+			if err := recover(); err != nil { //catch
+				//fmt.Fprintf(os.Stderr, "Exception: %v\n", err)
+				ioutil.WriteFile(outputPipe, []byte("exception"), syscall.O_WRONLY)
+				return
+			}
+		}()
+
 		// RUN TXs
 		// println(fuzzedInputProto.String())
 		fuzzResult := tests.RunFuzz(fuzzedInputProto)
@@ -294,6 +302,4 @@ func main() {
 			panic(err)
 		}
 	}
-
-	return
 }

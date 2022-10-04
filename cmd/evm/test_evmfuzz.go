@@ -12,7 +12,8 @@ import (
 )
 
 func test() {
-	dirname := "../openethereum/crates/evmfuzz/fuzz/corpus/fuzz_target_1"
+	//dirname := "../openethereum/crates/evmfuzz/fuzz/corpus/fuzz_target_1"
+	dirname := "../openethereum/crates/evmfuzz/go-errors"
 	files, err := ioutil.ReadDir(dirname)
 	if err != nil {
 		panic(err)
