@@ -264,9 +264,6 @@ func main() {
 		}
 	}()
 
-	println(inputPipe)
-	println(outputPipe)
-
 	for {
 		// READ
 		fuzzedInput, err := ioutil.ReadFile(inputPipe)
